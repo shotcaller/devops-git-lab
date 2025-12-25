@@ -7,7 +7,7 @@ module.exports = [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "commonjs",
-      globals: gloabls.node,
+      globals: globals.node,
     },
     rules: {
       "no-unused-vars": "error",
