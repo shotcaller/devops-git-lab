@@ -9,16 +9,32 @@ permissions:
   contents: read
 
 jobs:
-  smoke:
+  ci:
+    name: lint-and-test
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Show repo info
-        run: |
-          echo "Branch: $GITHUB_REF"
-          echo "Actor: $GITHUB_ACTOR"
-          ls -la
-      - name: Smoke check
-        run: |
-          test -f README.md
-          echo "✅ CI is running"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies (clean, reproducible)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test (with report)
+        run: npm run test:report
+
+      - name: Upload test report (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
