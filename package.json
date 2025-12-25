@@ -13,7 +13,7 @@
   "scripts": {
     "lint": "eslint .",
     "test": "jest --ci",
-    "test:report": "jest --ci --reporters=default --reporters=jest-junit"
+    "test:report": "jest --ci"
   },
   "keywords": [],
   "author": "",
