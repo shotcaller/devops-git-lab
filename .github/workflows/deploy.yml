@@ -2,29 +2,50 @@ name: Deploy (demo)
 
 on:
   workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Where to deploy"
+        type: choice
+        required: true
+        options:
+          - dev
+          - prod
+      mode:
+        description: "What to do"
+        type: choice
+        required: true
+        options:
+          - plan
+          - apply
 
 permissions:
   contents: read
 
 jobs:
-  deploy-dev:
-    name: deploy to dev
+  deploy:
+    name: ${{ inputs.mode }} to ${{ inputs.target_env }}
     runs-on: ubuntu-latest
-    environment: dev
+    environment: ${{ inputs.target_env }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show where we are deploying
+      - name: Show deployment context
         run: |
-          echo "Deploying to environment: dev"
-          echo "Actor: $GITHUB_ACTOR"
-          echo "Ref:   $GITHUB_REF"
+          echo "Mode:        ${{ inputs.mode }}"
+          echo "Environment: ${{ inputs.target_env }}"
+          echo "Actor:       $GITHUB_ACTOR"
+          echo "Ref:         $GITHUB_REF"
 
-      - name: Use secret safely (masked)
+      - name: Simulate plan
+        if: inputs.mode == 'plan'
+        run: |
+          echo "✅ PLAN: generating a preview of changes (no real changes made)"
+
+      - name: Simulate apply (uses secret)
+        if: inputs.mode == 'apply'
         env:
           DEMO_TOKEN: ${{ secrets.DEMO_TOKEN }}
         run: |
-          echo "Secret length is: ${#DEMO_TOKEN}"
-          echo "If we accidentally print it, GitHub should mask it:"
-          echo "$DEMO_TOKEN"
+          echo "✅ APPLY: executing deployment using protected env secrets"
+          echo "Token length: ${#DEMO_TOKEN}"
