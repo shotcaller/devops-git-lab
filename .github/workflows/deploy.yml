@@ -1,0 +1,30 @@
+name: Deploy (demo)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-dev:
+    name: deploy to dev
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show where we are deploying
+        run: |
+          echo "Deploying to environment: dev"
+          echo "Actor: $GITHUB_ACTOR"
+          echo "Ref:   $GITHUB_REF"
+
+      - name: Use secret safely (masked)
+        env:
+          DEMO_TOKEN: ${{ secrets.DEMO_TOKEN }}
+        run: |
+          echo "Secret length is: ${#DEMO_TOKEN}"
+          echo "If we accidentally print it, GitHub should mask it:"
+          echo "$DEMO_TOKEN"
