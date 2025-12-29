@@ -1,0 +1,34 @@
+name: Infra
+
+on:
+  pull_request:
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra.yml"
+      - ".github/workflows/reusable-infra.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/reusable-infra.yml
+    with:
+      mode: plan
+      target_env: dev
+
+  apply:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/reusable-infra.yml
+    with:
+      mode: apply
+      target_env: dev
