@@ -9,6 +9,14 @@ on:
       target_env:
         type: string
         required: true
+      plan_artifact_name:
+        type: string
+        required: false
+        default: ""
+    outputs:
+      plan_artifact_name:
+        description: "Artifact name produced by plan"
+        value: ${{ jobs.plan.outputs.plan_artifact_name }}
 
 permissions:
   contents: read
@@ -17,15 +25,15 @@ jobs:
   plan:
     if: inputs.mode == 'plan'
     runs-on: ubuntu-latest
+    outputs:
+      plan_artifact_name: ${{ steps.meta.outputs.plan_artifact_name }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Simulate fmt/validate
-        run: |
-          echo "✅ fmt"
-          echo "✅ validate"
+      - id: meta
+        run: echo "plan_artifact_name=infra-plan-${{ inputs.target_env }}-${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
-      - name: Simulate plan output
+      - name: Create simulated plan
         run: |
           mkdir -p plans
           echo "PLAN for ${{ inputs.target_env }} at commit $GITHUB_SHA" > plans/plan.txt
@@ -34,18 +42,32 @@ jobs:
       - name: Upload plan artifact
         uses: actions/upload-artifact@v4
         with:
-          name: infra-plan-${{ inputs.target_env }}
+          name: ${{ steps.meta.outputs.plan_artifact_name }}
           path: plans/
           if-no-files-found: error
 
   apply:
     if: inputs.mode == 'apply'
     runs-on: ubuntu-latest
-    environment: ${{ inputs.target_env }}   # ✅ approval only here
+    environment: ${{ inputs.target_env }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Simulate apply
+      - name: Download plan artifact (must exist)
+        if: inputs.plan_artifact_name != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.plan_artifact_name }}
+          path: downloaded-plan
+
+      - name: Show plan we are applying
         run: |
-          echo "✅ APPLY to ${{ inputs.target_env }} (simulated)"
-          echo "This is where terraform apply will go later."
+          if [ -f downloaded-plan/plan.txt ]; then
+            echo "Applying this plan:"
+            cat downloaded-plan/plan.txt
+          else
+            echo "No plan artifact provided; simulating direct apply."
+          fi
+
+      - name: Simulate apply
+        run: echo "✅ APPLY to ${{ inputs.target_env }} (simulated)"
