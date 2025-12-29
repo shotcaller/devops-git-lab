@@ -17,7 +17,7 @@ jobs:
   infra:
     name: ${{ inputs.mode }} (${{ inputs.target_env }})
     runs-on: ubuntu-latest
-    environment: ${{ inputs.target_env }}
+    
 
     steps:
       - uses: actions/checkout@v4
