@@ -1,16 +1,23 @@
 name: Infra
 
 on:
-  workflow_dispatch:
   pull_request:
     paths:
       - "infra/**"
       - ".github/workflows/infra.yml"
       - ".github/workflows/reusable-infra.yml"
-  push:
-    branches: [main]
-    paths:
-      - "infra/**"
+
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Environment"
+        type: choice
+        required: true
+        options: [dev]
+      plan_artifact_name:
+        description: "Plan artifact name to apply (from PR run)"
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -28,8 +35,9 @@ jobs:
       target_env: dev
 
   apply:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/reusable-infra.yml
     with:
       mode: apply
-      target_env: dev
+      target_env: ${{ inputs.target_env }}
+      plan_artifact_name: ${{ inputs.plan_artifact_name }}
