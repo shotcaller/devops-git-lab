@@ -14,11 +14,9 @@ permissions:
   contents: read
 
 jobs:
-  infra:
-    name: ${{ inputs.mode }} (${{ inputs.target_env }})
+  plan:
+    if: inputs.mode == 'plan'
     runs-on: ubuntu-latest
-    
-
     steps:
       - uses: actions/checkout@v4
 
@@ -28,36 +26,26 @@ jobs:
           echo "✅ validate"
 
       - name: Simulate plan output
-        if: inputs.mode == 'plan'
         run: |
           mkdir -p plans
           echo "PLAN for ${{ inputs.target_env }} at commit $GITHUB_SHA" > plans/plan.txt
           echo "Change: +1 resource (simulated)" >> plans/plan.txt
 
       - name: Upload plan artifact
-        if: inputs.mode == 'plan'
         uses: actions/upload-artifact@v4
         with:
           name: infra-plan-${{ inputs.target_env }}
           path: plans/
           if-no-files-found: error
 
+  apply:
+    if: inputs.mode == 'apply'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_env }}   # ✅ approval only here
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Simulate apply
-        if: inputs.mode == 'apply'
         run: |
           echo "✅ APPLY to ${{ inputs.target_env }} (simulated)"
           echo "This is where terraform apply will go later."
-
-      - name: Job summary
-        if: always()
-        run: |
-          {
-            echo "## Infra ${{ inputs.mode }} Summary"
-            echo ""
-            echo "- Environment: **${{ inputs.target_env }}**"
-            echo "- Mode: **${{ inputs.mode }}**"
-            echo "- Commit: \`$GITHUB_SHA\`"
-            if [ "${{ inputs.mode }}" = "plan" ]; then
-              echo "- Artifact: **infra-plan-${{ inputs.target_env }}**"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
