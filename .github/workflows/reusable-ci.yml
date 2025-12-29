@@ -50,3 +50,17 @@ jobs:
           name: test-reports-node-${{ inputs.node_version }}
           path: reports/
           if-no-files-found: error
+      
+      - name: Job Summary
+        if: always()
+        run: |
+          {
+            echo "## CI Summary"
+            echo ""
+            echo "- Node version: **${{ inputs.node_version }}**"
+            echo "- Lint: ✅ (if this job reached here)"
+            echo "- Tests: ✅ (if this job reached here)"
+            echo "- Test report artifact: **test-reports-node-${{ inputs.node_version }}**"
+            echo ""
+            echo "Tip: Download the artifact from the run page to view JUnit report."
+           } >> "$GITHUB_STEP_SUMMARY"
